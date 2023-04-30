@@ -1,19 +1,19 @@
-import grpc
-import os
-import codecs
+from lightning import Plugin
 from lndgrpc import lnrpc
+import codecs
 
-# Connect to LND node using gRPC
-os.environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
+plugin = Plugin()
 
-# open tls file
-# TODO: configure path
-cert = open('tls.cert', 'rb').read()
-creds = grpc.ssl_channel_credentials(cert)
-channel = grpc.secure_channel('localhost:10009', creds)
-stub = lnrpc.LightningStub(channel)
+@plugin.method("export-channel-state")
+def export_channel_state(plugin):
+    # Connect to LND node using gRPC
+    cert = plugin.rpc.listconfigs()["tls_cert"]
+    macaroon = plugin.rpc.invoice("1")["payment_request"]
+    os.environ["GRPC_SSL_CIPHER_SUITES"] = 'HIGH+ECDSA'
+    creds = grpc.ssl_channel_credentials(cert)
+    channel = grpc.secure_channel('localhost:10009', creds)
+    stub = lnrpc.LightningStub(channel)
 
-try:
     # Call listchannels gRPC method
     response = stub.ListChannels(lnrpc.ListChannelsRequest())
 
@@ -28,13 +28,9 @@ try:
     response = stub.ExportChannelBackup(lnrpc.ChanBackupExportRequest())
 
     # Save channel backup to file
-    #TODO: update file name with channel ID & date
     with open('channelstate.backup', 'wb') as f:
         f.write(response.backup)
 
-except grpc.RpcError as e:
-    print("Error occurred during gRPC call: ", e)
+    return {'message': 'Channel state exported to channelstate.backup file.'}
 
-finally:
-    # close gRPC channel
-    channel.close()
+plugin.run()
