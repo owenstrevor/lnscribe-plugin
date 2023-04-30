@@ -28,5 +28,6 @@ for channel in response.channels:
 response = stub.ExportChannelBackup(lnrpc.ChanBackupExportRequest())
 
 # Save channel backup to file
-with open('path/to/backup.file', 'wb') as f:
+#TODO: update file name with channel ID & date
+with open('channelstate.backup', 'wb') as f:
     f.write(response.backup)
