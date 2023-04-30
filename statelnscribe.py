@@ -22,3 +22,11 @@ for channel in response.channels:
     print("Channel state:", channel.channel_status)
     print("Local balance:", channel.local_balance)
     print("Remote balance:", channel.remote_balance)
+
+
+# Call exportchanbackup gRPC method
+response = stub.ExportChannelBackup(lnrpc.ChanBackupExportRequest())
+
+# Save channel backup to file
+with open('path/to/backup.file', 'wb') as f:
+    f.write(response.backup)
